@@ -13,18 +13,30 @@ src
 ├── app.module.ts
 ├── main.ts
 └── Modules
-    └── ModuleName
-        ├── application
-        │   └── UseCasesName
+    ├── ModuleName
+    │   ├── application
+    │   │   └── UseCasesName
+    │   ├── domain
+    │   │   ├── entities
+    │   │   ├── repositories
+    │   │   ├── events
+    │   │   └── dto
+    │   ├── infrastructure
+    │   │   ├── controllers
+    │   │   ├── repositories
+    │   │   ├── services
+    │   │   └── subscribers
+    │   └── ModuleName.module.ts
+    └── Shared
         ├── domain
         │   ├── entities
         │   ├── repositories
         │   ├── events
         │   └── dto
-        └── infrastructure
-            ├── controllers
-            ├── repositories
-            ├── services
-            └── subscribers
-
+        ├── infrastructure
+        │   ├── controllers
+        │   ├── repositories
+        │   ├── services
+        │   └── subscribers
+        └── Shared.module.ts
 ```

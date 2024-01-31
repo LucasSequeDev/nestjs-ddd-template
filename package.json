@@ -23,7 +23,8 @@
     "lint": "eslint --ignore-path .gitignore . --ext .js,.ts",
     "lint:fix": "npm run lint -- --fix",
     "build:clean": "rimraf dist; exit 0",
-    "module": "ts-node cli.js"
+    "module": "ts-node cli.js",
+    "depcruise:validate": "depcruise --output-type err-long --config .dependency-cruiser.js src"
   },
   "dependencies": {
     "@fastify/static": "^6.12.0",
