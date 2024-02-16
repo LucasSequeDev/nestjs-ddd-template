@@ -1,6 +1,7 @@
-import { program as command } from "commander";
+/* eslint-disable @typescript-eslint/no-var-requires */
+const { program: command } = require("commander");
 
-import { createNewModule } from "./commands/create-new-module";
+const createNewModule = require("./commands/create-new-module");
 
 const program = command
   .description("🔥 CLI Template Generator 🔥")

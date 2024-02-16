@@ -1,11 +1,8 @@
-import { Command } from "commander";
-import ejs from "ejs";
-import fs from "fs";
-import inquirer from "inquirer";
-import ora from "ora";
-import path from "path";
-
-import { toPascalCase } from "../utils/toPascalCase.js";
+/* eslint-disable @typescript-eslint/no-var-requires */
+const fs = require("fs");
+const inquirer = require("inquirer");
+const ora = require("ora");
+const path = require("path");
 
 const FOLDER_BASE = ["application", "domain", "infrastructure"];
 const FOLDER_APPLICATION = [];
@@ -41,7 +38,7 @@ const QUESTIONS = [
   },
 ];
 
-export function createNewModule(program: Command) {
+module.exports = function createNewModule(program) {
   program
     .command("create:module")
     .alias("m")
@@ -55,16 +52,12 @@ export function createNewModule(program: Command) {
         _repositoryName,
       } = await inquirer.prompt(QUESTIONS);
 
-      const moduleName = toPascalCase(_moduleName);
-      const useCaseName = toPascalCase(_useCaseName);
-      const serviceName = toPascalCase(_serviceName);
-      const repositoryName = toPascalCase(_repositoryName);
+      const moduleName = _moduleName[0].toUpperCase() + _moduleName.slice(1);
+      const useCaseName = _useCaseName[0].toUpperCase() + _useCaseName.slice(1);
+      const serviceName = _serviceName[0].toUpperCase() + _serviceName.slice(1);
+      const repositoryName =
+        _repositoryName[0].toUpperCase() + _repositoryName.slice(1);
       const modulePath = path.join("src/modules", moduleName);
-
-      if (fs.existsSync(modulePath)) {
-        console.error("Error: El módulo ya existe.");
-        process.exit(1);
-      }
 
       const spinner = ora("Creando template del remoto").start();
 
@@ -86,7 +79,7 @@ export function createNewModule(program: Command) {
             // Create use case file
             const useCaseFileContent = `import { Injectable } from "@nestjs/common";
 
-import {  ${repositoryName}Repository } from "../../domain/repositories/ ${repositoryName}Repository";
+import {  ${repositoryName}Repository } from "../../domain/repositories/${repositoryName}Repository";
 
 @Injectable()
 export class ${useCaseName} {
@@ -95,8 +88,7 @@ export class ${useCaseName} {
   ) {}
 
   async execute(id: string): Promise<void> {
-    // Create a Use Case
-    return this.repository.create(id);
+    // 🚀 Create a Use Case
   }
 }`;
 
@@ -115,7 +107,29 @@ export class ${useCaseName} {
           });
 
           // create repository file
-          // TODO: create repository file
+          const repositoryFileContent = `export abstract class ${repositoryName}Repository {
+  abstract create(): void;
+}`;
+
+          fs.mkdirSync(
+            path.join(
+              modulePath,
+              folder,
+              "repositories",
+              repositoryName + "Repository",
+            ),
+          );
+
+          fs.writeFileSync(
+            path.join(
+              modulePath,
+              folder,
+              "repositories",
+              repositoryName + "Repository",
+              "index.ts",
+            ),
+            repositoryFileContent,
+          );
         }
 
         if (folder === "infrastructure") {
@@ -126,20 +140,125 @@ export class ${useCaseName} {
           });
 
           // create repository file
-          // TODO: create repository file
+          const repositoryFileContent = `import { Injectable } from "@nestjs/common";
+import { ${repositoryName}Repository } from "../../../domain/repositories/${repositoryName}Repository";
+import { ${serviceName}Service } from "../../services/${serviceName}Service";
+
+@Injectable()
+export class ${serviceName}${repositoryName}Repository implements ${repositoryName}Repository {
+  constructor(
+    private readonly service: ${serviceName}Service,
+  ) {}
+
+  create(): void {
+    // 🚀 Implement repository
+  }
+}`;
+
+          fs.mkdirSync(
+            path.join(
+              modulePath,
+              folder,
+              "repositories",
+              serviceName + repositoryName + "Repository",
+            ),
+          );
+
+          fs.writeFileSync(
+            path.join(
+              modulePath,
+              folder,
+              "repositories",
+              serviceName + repositoryName + "Repository",
+              "index.ts",
+            ),
+            repositoryFileContent,
+          );
 
           // create service file
-          // TODO: create service file
+          const serviceFileContent = `import { Injectable } from "@nestjs/common";
 
-          // TODO: CREATE A LOGIC TO CREATE THE FILE BASED ON THE ACCESS
+@Injectable()
+export class ${serviceName}Service {
+  constructor() {}
+
+  create(): void {
+    // 🚀 Implement service
+  }
+}`;
+
+          fs.mkdirSync(
+            path.join(modulePath, folder, "services", serviceName + "Service"),
+          );
+
+          fs.writeFileSync(
+            path.join(
+              modulePath,
+              folder,
+              "services",
+              serviceName + "Service",
+              "index.ts",
+            ),
+            serviceFileContent,
+          );
+
           // create controller file
-          // TODO: create controller file
+          if (_access === "controller") {
+          }
 
           // create subscriber file
-          // TODO: create subscriber file
+          if (_access === "subscriber") {
+            const subscriberFileContent = `import { Injectable, OnApplicationBootstrap } from "@nestjs/common";
+
+import { ${useCaseName} } from "../../../application/${useCaseName}";
+import {
+  Callback,
+  SubscribeMessageQueueRepository,
+} from "../../domain/repository/SubscribeMessageQueueRepository";
+
+interface MessageQueue {
+  body?: string;
+  messageId?: string;
+  receiptHandle?: string;
+}
+
+type Callback = (message: MessageQueue) => void;
+
+@Injectable()
+export class ${useCaseName}Subscriber implements OnApplicationBootstrap {
+  constructor(
+    private sub: SubscribeMessageQueueRepository,
+    private useCase: ${useCaseName},
+  ) {}
+
+  async onApplicationBootstrap(): Promise<void> {
+    this.sub.subscribe(this.run);
+  }
+
+  private run: Callback = async message => {
+    const { body } = message
+    const messageReceived = this.getBodyMessage(body);
+    this.useCase.execute(messageReceived);
+  };
+
+  private getBodyMessage(msg: string | undefined): string {
+    if (!msg) {
+      throw new Error("Message Queue is empty");
+    }
+    const json = JSON.parse(msg);
+    if (!json.Message) {
+      throw new Error("Message is empty");
+    }
+    const data = JSON.parse(json.Message);
+    return data;
+  }
+}`;
+            console.log(subscriberFileContent);
+          }
 
           // create event file
-          // TODO: create event file
+          if (_access === "event") {
+          }
         }
       });
 
@@ -226,4 +345,4 @@ export class ${useCaseName} {
       //     spinner.stop();
       //   }
     });
-}
+};
